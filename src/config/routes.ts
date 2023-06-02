@@ -5,7 +5,8 @@ const routes = {
   decrypt: '/decrypt',
   records: '/records',
   transfer: '/transfer',
-  cookieMonster: '/cookieMonster',
+  mint: '/mint',
+  quiz: '/quiz',
 };
 
 export default routes;

@@ -13,24 +13,25 @@ import {
   WalletAdapterNetwork,
   WalletNotConnectedError,
 } from '@demox-labs/aleo-wallet-adapter-base';
-import RecordsPage from './records';
 
-const BakeCookiesPage: NextPageWithLayout = () => {
-  const COOKIE_MONSTER_PROGRAM_NAME = 'cookie_monster_14rwsw.aleo';
+const mintPage: NextPageWithLayout = () => {
+  const THE_LIOLIK_PROGRAM_NAME = 'a.aleo';
 
-  const { wallet, publicKey } = useWallet();
+  const { wallet, publicKey, requestRecords} = useWallet();
 
   // Bake Cookie State
   let [bakeCookieToAddress, setBakeCookieToAddress] = useState('');
   let [cookieType, setCookieType] = useState<number | undefined>();
-  let [cookieDeliciousness, setCookieDeliciousness] = useState<
-    number | undefined
-  >();
+  let [cookieType1, setCookieType1] = useState<number | undefined>();
+  
   let [bakeCookieTxPayload, setBakeCookieTxPayload] = useState<string>('');
 
   // Eat Cookie State
   let [eatCookieRecord, setEatCookieRecord] = useState<string>('');
   let [eatCookieTxPayload, setEatCookieTxPayload] = useState<string>('');
+
+
+
 
   const handleBakeCookieSubmit = async (event: any) => {
     event.preventDefault();
@@ -39,17 +40,19 @@ const BakeCookiesPage: NextPageWithLayout = () => {
     const inputs = [
       bakeCookieToAddress,
       `${cookieType}u64`,
-      `${cookieDeliciousness}u64`,
+      
     ];
 
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
       WalletAdapterNetwork.Testnet,
-      COOKIE_MONSTER_PROGRAM_NAME,
-      'bake_cookie',
+      THE_LIOLIK_PROGRAM_NAME,
+      'mint_public',
       inputs,
-      'https://aleo-public.s3.us-west-2.amazonaws.com/testnet3/bake_cookie_with_function_name.prover'
+      'https://provers.s3.us-west-2.amazonaws.com/mint_public.prover'
     );
+
+    console.log(aleoTransaction);
 
     const txPayload =
       (await (wallet?.adapter as LeoWalletAdapter).requestTransaction(
@@ -58,32 +61,36 @@ const BakeCookiesPage: NextPageWithLayout = () => {
     if (event.target?.elements[0]?.value) {
       event.target.elements[0].value = '';
     }
-    setBakeCookieTxPayload('Check your wallet to see the cookie transaction');
+    setBakeCookieTxPayload('Check your wallet to see the token transaction');
   };
 
   const handleEatCookieSubmit = async (event: any) => {
     event.preventDefault();
     if (!publicKey) throw new WalletNotConnectedError();
+    const records = await requestRecords!('a.aleo');
+    const recordToSpend = records.filter(rec => !rec.spent)[0];
 
-    const inputs = [JSON.parse(eatCookieRecord)];
+    const inputs = [recordToSpend, eatCookieRecord, `${cookieType1}u64`];
+    
 
     const aleoTransaction = Transaction.createTransaction(
       publicKey,
       WalletAdapterNetwork.Testnet,
-      COOKIE_MONSTER_PROGRAM_NAME,
-      'eat_cookie',
+      THE_LIOLIK_PROGRAM_NAME,
+      'transfer_public',
       inputs,
-      'https://aleo-public.s3.us-west-2.amazonaws.com/testnet3/eat_cookie.prover'
+      'https://provers.s3.us-west-2.amazonaws.com/transfer_public.prover'
     );
 
-    await (wallet?.adapter as LeoWalletAdapter).requestTransaction(
+    const txPayload =
+    (await (wallet?.adapter as LeoWalletAdapter).requestTransaction(
       aleoTransaction
-    );
-    if (event.target?.elements[0]?.value) {
-      event.target.elements[0].value = '';
-    }
+    )) || '';
+  if (event.target?.elements[0]?.value) {
+    event.target.elements[0].value = '';
+  }
     setEatCookieTxPayload(
-      `Check your wallet to see the transaction. After it completes, check to see if the cookie record has been spent! \n 
+      `Check your wallet to see the transaction. \n 
       Note: Spent status may take awhile to update.`
     );
   };
@@ -96,10 +103,13 @@ const BakeCookiesPage: NextPageWithLayout = () => {
     event.preventDefault();
     setCookieType(event.currentTarget.value);
   };
-  const handleDeliciousnessChange = (event: any) => {
+  const handleCookieType1Change = (event: any) => {
     event.preventDefault();
-    setCookieDeliciousness(event.currentTarget.value);
+    setCookieType1(event.currentTarget.value);
   };
+  
+  
+
   const handleEatCookieRecordChange = (event: any) => {
     event.preventDefault();
     setEatCookieRecord(event.currentTarget.value);
@@ -108,23 +118,19 @@ const BakeCookiesPage: NextPageWithLayout = () => {
   return (
     <>
       <NextSeo
-        title="Leo Wallet | Cookie Monster example"
-        description="Create and consume cookie records via the Leo Wallet"
+        title="Mint a-Token"
+        description="Mint and transfer a-Token"
       />
       <div className="mx-auto w-full px-4 pt-8 pb-14 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8 xl:px-10 2xl:px-0">
         <h2 className="mb-2 text-lg font-medium uppercase tracking-wider text-gray-900 dark:text-white sm:mb-6 sm:text-2xl">
-          Cookie Monster example
+          Mint and transfer the a-Token
         </h2>
         <p className="mb-6 hidden w-1/2 text-xs tracking-tighter text-gray-600 dark:text-gray-400 sm:block">
-          This is an example of how to use the Leo Wallet to create and consume
-          records of an arbitrary program. <br />
-          The ability to create arbitrary programs, deploy them to the chainm
-          and execute them in a completely privacy preserving way is one of the
-          most powerful features of the Aleo blockchain and by utilizing the Leo
-          wallet it can be done easily and securely.
+           <br />
+
         </p>
         <Section
-          title="STEP 1 - Bake a cookie"
+          title="Mint a-Token"
           bgColor="bg-white shadow-card dark:bg-light-dark"
           sectionWidth="w-1/2"
         >
@@ -136,11 +142,11 @@ const BakeCookiesPage: NextPageWithLayout = () => {
               await handleBakeCookieSubmit(event);
             }}
           >
-            <p className="mt-6">Address to send cookie: </p>
+            <p className="mt-6">Address to mint the a-Token: </p>
             <label className="flex w-full items-center py-4">
               <input
                 className="h-11 w-full appearance-none rounded-lg border-2 border-gray-200 bg-transparent py-1 text-sm tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 focus:border-gray-900 ltr:pr-5 ltr:pl-10 rtl:pr-10 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-gray-500"
-                placeholder="To address: ie, aleo1kf3dgrz9lqyklz8kqfy0hpxxyt78qfuzshuhccl02a5x43x6nqpsaapqru"
+                placeholder="Your wallet address"
                 autoComplete="off"
                 onChange={(event: FormEvent<Element>) =>
                   handleToAddressChange(event)
@@ -151,11 +157,11 @@ const BakeCookiesPage: NextPageWithLayout = () => {
                 <Check className="h-4 w-4" />
               </span>
             </label>
-            <p className="mt-4">Cookie type: </p>
+            <p className="mt-4">Token quantity </p>
             <label className="flex w-full items-center py-4">
               <input
                 className="h-11 w-full appearance-none rounded-lg border-2 border-gray-200 bg-transparent py-1 text-sm tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 focus:border-gray-900 ltr:pr-5 ltr:pl-10 rtl:pr-10 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-gray-500"
-                placeholder="Cookie type as u64"
+                placeholder="1-100"
                 autoComplete="off"
                 onChange={(event: FormEvent<Element>) =>
                   handleCookieTypeChange(event)
@@ -166,21 +172,7 @@ const BakeCookiesPage: NextPageWithLayout = () => {
                 <Check className="h-4 w-4" />
               </span>
             </label>
-            <p className="mt-4">Cookie deliciousness: </p>
-            <label className="flex w-full items-center py-4">
-              <input
-                className="h-11 w-full appearance-none rounded-lg border-2 border-gray-200 bg-transparent py-1 text-sm tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 focus:border-gray-900 ltr:pr-5 ltr:pl-10 rtl:pr-10 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-gray-500"
-                placeholder="How delicious should this cookie be? Use u64"
-                autoComplete="off"
-                onChange={(event: FormEvent<Element>) =>
-                  handleDeliciousnessChange(event)
-                }
-                value={cookieDeliciousness}
-              />
-              <span className="pointer-events-none absolute flex h-full w-8 cursor-pointer items-center justify-center text-gray-600 hover:text-gray-900 ltr:left-0 ltr:pl-2 rtl:right-0 rtl:pr-2 dark:text-gray-500 sm:ltr:pl-3 sm:rtl:pr-3">
-                <Check className="h-4 w-4" />
-              </span>
-            </label>
+
             <div className="flex items-center justify-center">
               <Button
                 disabled={!publicKey || bakeCookieToAddress.length < 1}
@@ -200,18 +192,12 @@ const BakeCookiesPage: NextPageWithLayout = () => {
             </div>
           )}
         </Section>
-        <Section title="STEP 2 - GET YOUR COOKIES" bgColor="">
-          <RecordsPage
-            initialProgram={COOKIE_MONSTER_PROGRAM_NAME}
-          ></RecordsPage>
-        </Section>
+
         <Section
-          title="STEP 3 - EAT A COOKIE"
+          title="Transfer a-Token"
           bgColor="bg-white shadow-card dark:bg-light-dark"
           sectionWidth="w-1/2"
         >
-          Now that you have baked a cookie and have an unspent cookie record,
-          let&apos;s eat it!
           <form
             className="relative flex w-full flex-col rounded-full md:w-auto"
             noValidate
@@ -220,11 +206,11 @@ const BakeCookiesPage: NextPageWithLayout = () => {
               await handleEatCookieSubmit(event);
             }}
           >
-            <p className="mt-6">Cookie record to eat: </p>
+            <p className="mt-6">Address to transfer the a-Token: </p>
             <label className="flex w-full items-center py-4">
               <input
                 className="h-11 w-full appearance-none rounded-lg border-2 border-gray-200 bg-transparent py-1 text-sm tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 focus:border-gray-900 ltr:pr-5 ltr:pl-10 rtl:pr-10 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-gray-500"
-                placeholder="To address: ie, aleo1kf3dgrz9lqyklz8kqfy0hpxxyt78qfuzshuhccl02a5x43x6nqpsaapqru"
+                placeholder="Recipient address"
                 autoComplete="off"
                 onChange={(event: FormEvent<Element>) =>
                   handleEatCookieRecordChange(event)
@@ -234,6 +220,24 @@ const BakeCookiesPage: NextPageWithLayout = () => {
               <span className="pointer-events-none absolute flex h-full w-8 cursor-pointer items-center justify-center text-gray-600 hover:text-gray-900 ltr:left-0 ltr:pl-2 rtl:right-0 rtl:pr-2 dark:text-gray-500 sm:ltr:pl-3 sm:rtl:pr-3">
                 <Check className="h-4 w-4" />
               </span>
+
+            </label>
+
+              <p className="mt-4">Token quantity </p>
+            <label className="flex w-full items-center py-4">
+              <input
+                className="h-11 w-full appearance-none rounded-lg border-2 border-gray-200 bg-transparent py-1 text-sm tracking-tighter text-gray-900 outline-none transition-all placeholder:text-gray-600 focus:border-gray-900 ltr:pr-5 ltr:pl-10 rtl:pr-10 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-gray-500"
+                placeholder="1-100"
+                autoComplete="off"
+                onChange={(event: FormEvent<Element>) =>
+                  handleCookieType1Change(event)
+                }
+                value={cookieType1}
+              />
+              <span className="pointer-events-none absolute flex h-full w-8 cursor-pointer items-center justify-center text-gray-600 hover:text-gray-900 ltr:left-0 ltr:pl-2 rtl:right-0 rtl:pr-2 dark:text-gray-500 sm:ltr:pl-3 sm:rtl:pr-3">
+                <Check className="h-4 w-4" />
+              </span>
+            
             </label>
             <div className="flex items-center justify-center">
               <Button
@@ -259,8 +263,8 @@ const BakeCookiesPage: NextPageWithLayout = () => {
   );
 };
 
-BakeCookiesPage.getLayout = function getLayout(page) {
+mintPage.getLayout = function getLayout(page) {
   return <DashboardLayout>{page}</DashboardLayout>;
 };
 
-export default BakeCookiesPage;
+export default mintPage;

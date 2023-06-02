@@ -22,7 +22,9 @@ const MenuLinks = [
   { name: 'Sign', href: '/sign' },
   { name: 'Decrypt', href: '/decrypt' },
   { name: 'Records', href: '/records' },
-  { name: 'Cookie Monster', href: '/cookieMonster' },
+  { name: 'Mint', href: '/mint' },
+  { name: 'Quiz', href: '/quiz' },
+
 ];
 
 export function MenuItems() {
